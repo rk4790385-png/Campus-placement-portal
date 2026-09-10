@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
     LayoutDashboard, Briefcase, FileText, User, LogOut, GraduationCap, Bell,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { signOut as clearSession } from "@/lib/local-store";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,7 +30,7 @@ export function AppSidebar() {
     const signOut = async () => {
         await qc.cancelQueries();
         qc.clear();
-        await supabase.auth.signOut();
+        clearSession();
         toast.success("Signed out");
         navigate({ to: "/auth", replace: true });
     };

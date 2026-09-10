@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { supabase } from "@/integrations/supabase/client";
+import { getProfile, saveProfile } from "@/lib/local-store";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,6 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 function Profile() {
-    const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm<FormValues>({
         resolver: zodResolver(schema) as never,
@@ -43,56 +42,32 @@ function Profile() {
 
     useEffect(() => {
         (async () => {
-            const { data: u } = await supabase.auth.getUser();
-            if (!u.user) return;
-            setUserId(u.user.id);
-            const [{ data: p }, { data: s }] = await Promise.all([
-                supabase.from("profiles").select("full_name,phone").eq("id", u.user.id).maybeSingle(),
-                supabase.from("students").select("usn,branch,semester,cgpa,backlogs,skills,linkedin,github,portfolio,resume_url,bio").eq("id", u.user.id).maybeSingle(),
-            ]);
+            const profile = getProfile();
             reset({
-                full_name: p?.full_name ?? "",
-                phone: p?.phone ?? "",
-                usn: s?.usn ?? "",
-                branch: s?.branch ?? "",
-                semester: (s?.semester ?? "") as never,
-                cgpa: (s?.cgpa ?? "") as never,
-                backlogs: (s?.backlogs ?? "") as never,
-                skills: (s?.skills ?? []).join(", "),
-                linkedin: s?.linkedin ?? "",
-                github: s?.github ?? "",
-                portfolio: s?.portfolio ?? "",
-                resume_url: s?.resume_url ?? "",
-                bio: s?.bio ?? "",
+                ...profile,
+                skills: profile.skills.join(", "),
             });
             setLoading(false);
         })();
     }, [reset]);
 
     const onSubmit = handleSubmit(async (values) => {
-        if (!userId) return;
         const skillsArr = (values.skills ?? "").toString().split(",").map((s) => s.trim()).filter(Boolean);
-        const profileUpdate = { full_name: values.full_name, phone: values.phone || null };
-        const studentUpdate = {
-            id: userId,
-            usn: values.usn || null,
-            branch: values.branch || null,
+        saveProfile({
+            full_name: values.full_name,
+            phone: values.phone || "",
+            usn: values.usn || "",
+            branch: values.branch || "",
             semester: values.semester === ("" as never) ? null : (values.semester as number),
             cgpa: values.cgpa === ("" as never) ? null : (values.cgpa as number),
             backlogs: values.backlogs === ("" as never) ? 0 : (values.backlogs as number),
             skills: skillsArr,
-            linkedin: values.linkedin || null,
-            github: values.github || null,
-            portfolio: values.portfolio || null,
-            resume_url: values.resume_url || null,
-            bio: values.bio || null,
-        };
-
-        const [{ error: e1 }, { error: e2 }] = await Promise.all([
-            supabase.from("profiles").update(profileUpdate).eq("id", userId),
-            supabase.from("students").upsert(studentUpdate),
-        ]);
-        if (e1 || e2) { toast.error((e1 ?? e2)!.message); return; }
+            linkedin: values.linkedin || "",
+            github: values.github || "",
+            portfolio: values.portfolio || "",
+            resume_url: values.resume_url || "",
+            bio: values.bio || "",
+        });
         toast.success("Profile saved");
     });
 

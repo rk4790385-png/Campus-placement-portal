@@ -12,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportError } from "../lib/error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
     return (
@@ -95,12 +94,12 @@ function RootComponent() {
     const router = useRouter();
 
     useEffect(() => {
-        const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-            if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        const onStorage = () => {
             router.invalidate();
-            if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-        });
-        return () => sub.subscription.unsubscribe();
+            queryClient.invalidateQueries();
+        };
+        window.addEventListener("storage", onStorage);
+        return () => window.removeEventListener("storage", onStorage);
     }, [router, queryClient]);
 
     return (

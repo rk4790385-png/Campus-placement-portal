@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Search, MapPin, Calendar, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { supabase } from "@/integrations/supabase/client";
+import { applyToJob, getApplications, getUser, jobs as seedJobs } from "@/lib/local-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,38 +24,26 @@ type Job = {
 
 function Jobs() {
     const qc = useQueryClient();
-    const [userId, setUserId] = useState<string | null>(null);
+    const userId = getUser()?.id ?? null;
     const [q, setQ] = useState("");
     const [mode, setMode] = useState<string>("all");
     const [type, setType] = useState<string>("all");
 
-    useEffect(() => { supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null)); }, []);
-
     const { data: jobs = [] } = useQuery({
         queryKey: ["jobs"],
-        queryFn: async (): Promise<Job[]> => {
-            const { data } = await supabase
-                .from("jobs")
-                .select("id,title,role_type,work_mode,location,salary_lpa,description,min_cgpa,max_backlogs,open_positions,apply_deadline,company:companies(name,logo_url,website)")
-                .order("created_at", { ascending: false });
-            return (data as unknown as Job[]) ?? [];
-        },
+        queryFn: async (): Promise<Job[]> => seedJobs,
     });
 
     const { data: applied = new Set<string>() } = useQuery({
         queryKey: ["myAppliedJobIds", userId],
         enabled: !!userId,
-        queryFn: async () => {
-            const { data } = await supabase.from("applications").select("job_id").eq("student_id", userId!);
-            return new Set((data ?? []).map((r: any) => r.job_id as string));
-        },
+        queryFn: async () => new Set(getApplications().map((application) => application.job_id)),
     });
 
     const apply = useMutation({
         mutationFn: async (jobId: string) => {
             if (!userId) throw new Error("Not signed in");
-            const { error } = await supabase.from("applications").insert({ job_id: jobId, student_id: userId });
-            if (error) throw error;
+            applyToJob(jobId);
         },
         onSuccess: () => {
             toast.success("Application submitted");

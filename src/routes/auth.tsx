@@ -6,8 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GraduationCap, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { supabase } from "@/integrations/supabase/client";
-import { authClient } from "@/integrations/auth/index";
+import { getUser, signIn, signUp } from "@/lib/local-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,9 +43,7 @@ function AuthPage() {
     const [tab, setTab] = useState<"login" | "register">(search.mode ?? "login");
 
     useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => {
-            if (data.user) navigate({ to: "/dashboard" });
-        });
+        if (getUser()) navigate({ to: "/dashboard" });
     }, [navigate]);
 
     return (
@@ -96,12 +93,10 @@ function AuthPage() {
 
                         <TabsContent value="login" className="mt-6">
                             <LoginForm />
-                            <GoogleBlock />
                         </TabsContent>
 
                         <TabsContent value="register" className="mt-6">
                             <RegisterForm onDone={() => setTab("login")} />
-                            <GoogleBlock />
                         </TabsContent>
                     </Tabs>
 
@@ -114,37 +109,6 @@ function AuthPage() {
     );
 }
 
-function GoogleBlock() {
-    const [loading, setLoading] = useState(false);
-    const onGoogle = async () => {
-        setLoading(true);
-        const r = await authClient.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
-        if (r.error) { toast.error("Google sign-in failed"); setLoading(false); }
-    };
-    return (
-        <>
-            <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-                <div className="h-px flex-1 bg-border" /> OR <div className="h-px flex-1 bg-border" />
-            </div>
-            <Button type="button" variant="outline" className="w-full bg-background/40" onClick={onGoogle} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <GoogleIcon className="h-4 w-4 mr-2" />}
-                Continue with Google
-            </Button>
-        </>
-    );
-}
-
-function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
-    return (
-        <svg viewBox="0 0 24 24" {...props}>
-            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.4 1.1 7.4 2.9l5.7-5.7C33.8 6.5 29.2 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.6-.2-3-.5-4.5z" />
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 18.9 13 24 13c2.8 0 5.4 1.1 7.4 2.9l5.7-5.7C33.8 6.5 29.2 4.5 24 4.5c-7.3 0-13.6 4.1-16.7 10.2z" />
-            <path fill="#4CAF50" d="M24 45.5c5.1 0 9.7-1.9 13.2-5.1l-6.1-5c-1.9 1.4-4.4 2.3-7.1 2.3-5.3 0-9.7-3.5-11.3-8.4l-6.5 5C9.6 41 16.3 45.5 24 45.5z" />
-            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.2 5.4l6.1 5c4.3-4 7.3-9.9 7.3-16.4 0-1.6-.2-3-.5-4.5z" />
-        </svg>
-    );
-}
-
 function LoginForm() {
     const navigate = useNavigate();
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<z.infer<typeof loginSchema>>({
@@ -152,8 +116,7 @@ function LoginForm() {
     });
 
     const onSubmit = handleSubmit(async (values) => {
-        const { error } = await supabase.auth.signInWithPassword({ email: values.email, password: values.password });
-        if (error) { toast.error(error.message); return; }
+        try { signIn(values.email, values.password); } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to sign in"); return; }
         toast.success("Welcome back!");
         navigate({ to: "/dashboard" });
     });
@@ -192,22 +155,10 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
     const role = watch("role");
 
     const onSubmit = handleSubmit(async (values) => {
-        const { data, error } = await supabase.auth.signUp({
-            email: values.email,
-            password: values.password,
-            options: {
-                emailRedirectTo: window.location.origin + "/dashboard",
-                data: { full_name: values.full_name, role: values.role },
-            },
-        });
-        if (error) { toast.error(error.message); return; }
-        if (data.session) {
-            toast.success("Account created — welcome!");
-            navigate({ to: "/dashboard" });
-        } else {
-            toast.success("Check your email to confirm your account.");
-            onDone();
-        }
+        try { signUp(values.full_name, values.email, values.password, values.role); }
+        catch (error) { toast.error(error instanceof Error ? error.message : "Unable to create account"); return; }
+        toast.success("Account created — welcome!");
+        navigate({ to: "/dashboard" });
     });
 
     return (

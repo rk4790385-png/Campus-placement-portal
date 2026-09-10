@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Briefcase, FileCheck2, GraduationCap, TrendingUp, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getApplications, getProfile, getUser, jobs } from "@/lib/local-store";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,40 +18,25 @@ type StudentRow = {
 };
 
 function Overview() {
-    const [userId, setUserId] = useState<string | null>(null);
-    const [fullName, setFullName] = useState<string>("");
-
-    useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => {
-            setUserId(data.user?.id ?? null);
-            setFullName(data.user?.user_metadata?.full_name ?? data.user?.email?.split("@")[0] ?? "Student");
-        });
-    }, []);
+    const user = getUser();
+    const userId = user?.id ?? null;
+    const fullName = user?.fullName ?? "Student";
 
     const { data: student } = useQuery({
         queryKey: ["student", userId],
         enabled: !!userId,
-        queryFn: async (): Promise<StudentRow | null> => {
-            const { data } = await supabase.from("students").select("id,usn,branch,semester,cgpa,skills,resume_url,linkedin,github").eq("id", userId!).maybeSingle();
-            return data as StudentRow | null;
-        },
+        queryFn: async (): Promise<StudentRow | null> => ({ id: userId ?? "", ...getProfile() } as StudentRow),
     });
 
     const { data: jobsCount } = useQuery({
         queryKey: ["jobsCount"],
-        queryFn: async () => {
-            const { count } = await supabase.from("jobs").select("*", { count: "exact", head: true });
-            return count ?? 0;
-        },
+        queryFn: async () => jobs.length,
     });
 
     const { data: appsCount } = useQuery({
         queryKey: ["appsCount", userId],
         enabled: !!userId,
-        queryFn: async () => {
-            const { count } = await supabase.from("applications").select("*", { count: "exact", head: true }).eq("student_id", userId!);
-            return count ?? 0;
-        },
+        queryFn: async () => getApplications().length,
     });
 
     const completion = profileCompletion(student);
@@ -115,12 +100,7 @@ function RecentJobs() {
     const { data } = useQuery({
         queryKey: ["recentJobs"],
         queryFn: async () => {
-            const { data } = await supabase
-                .from("jobs")
-                .select("id,title,role_type,work_mode,location,salary_lpa,company:companies(name,logo_url)")
-                .order("created_at", { ascending: false })
-                .limit(4);
-            return data ?? [];
+            return jobs.slice(0, 4);
         },
     });
 

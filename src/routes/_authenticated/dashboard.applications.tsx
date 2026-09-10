@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { getApplications, getUser, jobs, withdrawApplication } from "@/lib/local-store";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,25 +21,17 @@ const statusVariant: Record<string, string> = {
 function Applications() {
     const qc = useQueryClient();
     const [userId, setUserId] = useState<string | null>(null);
-    useEffect(() => { supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null)); }, []);
+    useEffect(() => { setUserId(getUser()?.id ?? null); }, []);
 
     const { data = [] } = useQuery({
         queryKey: ["myApplications", userId],
         enabled: !!userId,
-        queryFn: async () => {
-            const { data } = await supabase
-                .from("applications")
-                .select("id,status,applied_at,job:jobs(id,title,location,salary_lpa,company:companies(name,logo_url))")
-                .eq("student_id", userId!)
-                .order("applied_at", { ascending: false });
-            return data ?? [];
-        },
+        queryFn: async () => getApplications().map((application) => ({ ...application, job: jobs.find((job) => job.id === application.job_id) })),
     });
 
     const withdraw = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase.from("applications").delete().eq("id", id);
-            if (error) throw error;
+            withdrawApplication(id);
         },
         onSuccess: () => {
             toast.success("Application withdrawn");
