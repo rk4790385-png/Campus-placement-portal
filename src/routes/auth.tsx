@@ -7,7 +7,7 @@ import { GraduationCap, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-rea
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { authClient } from "@/integrations/auth/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -118,7 +118,7 @@ function GoogleBlock() {
     const [loading, setLoading] = useState(false);
     const onGoogle = async () => {
         setLoading(true);
-        const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
+        const r = await authClient.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
         if (r.error) { toast.error("Google sign-in failed"); setLoading(false); }
     };
     return (

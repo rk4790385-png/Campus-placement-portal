@@ -2,7 +2,7 @@ import { GraduationCap } from "lucide-react";
 
 export function SiteFooter() {
     return (
-        <footer className="border-t border-border/60 bg-background/60">
+        <footer className="border-t border-border/70 bg-foreground text-background">
             <div className="mx-auto max-w-7xl px-6 py-12 grid gap-8 md:grid-cols-4">
                 <div>
                     <div className="flex items-center gap-2">
@@ -11,7 +11,7 @@ export function SiteFooter() {
                         </div>
                         <div className="font-bold">Campus Placement</div>
                     </div>
-                    <p className="mt-3 text-sm text-muted-foreground max-w-xs">
+                    <p className="mt-3 text-sm text-background/65 max-w-xs">
                         Connecting students with career opportunities at the world's top companies.
                     </p>
                 </div>
@@ -19,7 +19,7 @@ export function SiteFooter() {
                 <FooterCol title="Company" links={["About", "Careers", "Contact", "Blog"]} />
                 <FooterCol title="Legal" links={["Privacy", "Terms", "Security", "Status"]} />
             </div>
-            <div className="border-t border-border/50 py-5 text-center text-xs text-muted-foreground">
+            <div className="border-t border-background/15 py-5 text-center text-xs text-background/55">
                 © {new Date().getFullYear()} Campus Placement Portal · All rights reserved
             </div>
         </footer>

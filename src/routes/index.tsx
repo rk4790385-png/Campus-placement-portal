@@ -63,11 +63,11 @@ function Landing() {
                         <Sparkles className="h-3.5 w-3.5 text-accent" />
                         Trusted by 200+ campuses across India
                     </div>
-                    <h1 className="mt-6 text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05]">
-                        Where talent meets <span className="gradient-text">opportunity</span>.
+                    <h1 className="mt-6 max-w-4xl mx-auto text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] text-foreground">
+                        A clearer path from <span className="gradient-text">campus to career</span>.
                     </h1>
                     <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-                        The modern placement portal for colleges and universities. Students discover jobs, recruiters hire top talent, and placement cells run end-to-end drives — all in one elegant platform.
+                        One focused workspace for students, recruiters, and placement teams to manage every step from eligibility to offer.
                     </p>
                     <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
                         <Button asChild size="lg" className="btn-hero border-0 h-12 px-7 text-base">
@@ -96,7 +96,7 @@ function Landing() {
                 </div>
                 <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                     {["Google", "Microsoft", "Amazon", "Adobe", "Atlassian", "Stripe"].map((c) => (
-                        <div key={c} className="glass rounded-xl px-4 py-6 grid place-items-center text-sm font-semibold">
+                        <div key={c} className="glass rounded-lg px-4 py-6 grid place-items-center text-sm font-semibold tracking-tight">
                             {c}
                         </div>
                     ))}
@@ -119,7 +119,7 @@ function Landing() {
                         { icon: Calendar, title: "Drives & interviews", desc: "Schedule rounds, share venues, attach JDs, notify everyone in real time." },
                         { icon: BarChart3, title: "Analytics & reports", desc: "Department-wise placement %, highest/average package, exportable CSV/PDF." },
                     ].map((f) => (
-                        <div key={f.title} className="glass rounded-2xl p-6 hover:translate-y-[-2px] transition-transform">
+                        <div key={f.title} className="glass rounded-lg p-6 hover:-translate-y-0.5 transition-transform">
                             <div className="grid h-11 w-11 place-items-center rounded-lg" style={{ background: "var(--gradient-primary)" }}>
                                 <f.icon className="h-5 w-5 text-white" />
                             </div>
