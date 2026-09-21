@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GraduationCap, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { getUser, signIn, signUp } from "@/lib/local-store";
+import { getUser, signIn, signUp } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,7 +43,7 @@ function AuthPage() {
     const [tab, setTab] = useState<"login" | "register">(search.mode ?? "login");
 
     useEffect(() => {
-        if (getUser()) navigate({ to: "/dashboard" });
+        getUser().then((user) => { if (user) navigate({ to: "/dashboard" }); });
     }, [navigate]);
 
     return (
@@ -116,7 +116,7 @@ function LoginForm() {
     });
 
     const onSubmit = handleSubmit(async (values) => {
-        try { signIn(values.email, values.password); } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to sign in"); return; }
+        try { await signIn(values.email, values.password); } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to sign in"); return; }
         toast.success("Welcome back!");
         navigate({ to: "/dashboard" });
     });
@@ -155,7 +155,7 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
     const role = watch("role");
 
     const onSubmit = handleSubmit(async (values) => {
-        try { signUp(values.full_name, values.email, values.password, values.role); }
+        try { await signUp(values.full_name, values.email, values.password, values.role); }
         catch (error) { toast.error(error instanceof Error ? error.message : "Unable to create account"); return; }
         toast.success("Account created — welcome!");
         navigate({ to: "/dashboard" });

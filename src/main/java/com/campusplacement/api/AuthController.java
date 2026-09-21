@@ -1,0 +1,12 @@
+package com.campusplacement.api;
+import com.campusplacement.model.*; import com.campusplacement.repository.*; import jakarta.servlet.http.HttpSession; import jakarta.validation.constraints.*; import org.springframework.security.crypto.password.PasswordEncoder; import org.springframework.web.bind.annotation.*; import java.util.*;
+@RestController @RequestMapping("/api/auth") public class AuthController {
+ private final UserRepository users; private final ProfileRepository profiles; private final PasswordEncoder passwords;
+ AuthController(UserRepository users,ProfileRepository profiles,PasswordEncoder passwords){this.users=users;this.profiles=profiles;this.passwords=passwords;}
+ record Credentials(@Email String email,@Size(min=8,max=72) String password){} record Registration(@NotBlank @Size(max=80) String fullName,@Email String email,@Size(min=8,max=72) String password,@Pattern(regexp="student|recruiter") String role){} record UserView(UUID id,String email,String fullName,String role){}
+ private UserView view(UserAccount u){return new UserView(u.getId(),u.getEmail(),u.getFullName(),u.getRole());} private UserAccount current(HttpSession s){Object id=s.getAttribute("userId");if(id==null)throw new SecurityException("Sign in is required");return users.findById(UUID.fromString(id.toString())).orElseThrow(()->new SecurityException("Session is no longer valid"));}
+ @PostMapping("/register") UserView register(@RequestBody @jakarta.validation.Valid Registration r,HttpSession s){String email=r.email().trim().toLowerCase(Locale.ROOT);if(users.findByEmailIgnoreCase(email).isPresent())throw new IllegalArgumentException("An account with that email already exists");UserAccount u=users.save(new UserAccount(email,passwords.encode(r.password()),r.fullName().trim(),r.role()));if("student".equals(r.role()))profiles.save(new StudentProfile(u));s.setAttribute("userId",u.getId().toString());return view(u);}
+ @PostMapping("/login") UserView login(@RequestBody @jakarta.validation.Valid Credentials c,HttpSession s){UserAccount u=users.findByEmailIgnoreCase(c.email().trim()).orElseThrow(()->new SecurityException("Invalid email or password"));if(!passwords.matches(c.password(),u.getPasswordHash()))throw new SecurityException("Invalid email or password");s.setAttribute("userId",u.getId().toString());return view(u);}
+ @PostMapping("/logout") void logout(HttpSession s){s.invalidate();}
+ @GetMapping("/me") UserView me(HttpSession s){return view(current(s));}
+}

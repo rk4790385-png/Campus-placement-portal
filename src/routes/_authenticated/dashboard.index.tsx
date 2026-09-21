@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Briefcase, FileCheck2, GraduationCap, TrendingUp, Sparkles } from "lucide-react";
-import { getApplications, getProfile, getUser, jobs } from "@/lib/local-store";
+import { getApplications, getJobs, getProfile, getUser, type Job } from "@/lib/api";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,25 +18,29 @@ type StudentRow = {
 };
 
 function Overview() {
-    const user = getUser();
+    const [user, setUser] = useState<Awaited<ReturnType<typeof getUser>>>(null);
+    useEffect(() => { getUser().then(setUser); }, []);
     const userId = user?.id ?? null;
     const fullName = user?.fullName ?? "Student";
 
     const { data: student } = useQuery({
         queryKey: ["student", userId],
         enabled: !!userId,
-        queryFn: async (): Promise<StudentRow | null> => ({ id: userId ?? "", ...getProfile() } as StudentRow),
+        queryFn: async (): Promise<StudentRow | null> => {
+            const profile = await getProfile();
+            return { id: userId ?? "", usn: profile.usn, branch: profile.branch, semester: profile.semester, cgpa: profile.cgpa, skills: profile.skills, resume_url: profile.resumeUrl, linkedin: profile.linkedin, github: profile.github };
+        },
     });
 
     const { data: jobsCount } = useQuery({
         queryKey: ["jobsCount"],
-        queryFn: async () => jobs.length,
+        queryFn: async () => (await getJobs()).length,
     });
 
     const { data: appsCount } = useQuery({
         queryKey: ["appsCount", userId],
         enabled: !!userId,
-        queryFn: async () => getApplications().length,
+        queryFn: async () => (await getApplications()).length,
     });
 
     const completion = profileCompletion(student);
@@ -100,7 +104,7 @@ function RecentJobs() {
     const { data } = useQuery({
         queryKey: ["recentJobs"],
         queryFn: async () => {
-            return jobs.slice(0, 4);
+            return (await getJobs()).slice(0, 4);
         },
     });
 
@@ -111,14 +115,14 @@ function RecentJobs() {
                 {(data ?? []).map((j: any) => (
                     <Card key={j.id} className="glass p-5">
                         <div className="flex items-center gap-3">
-                            <img src={j.company?.logo_url} alt="" className="h-10 w-10 rounded-md bg-white object-contain p-1" />
+                            <img src={j.logoUrl} alt="" className="h-10 w-10 rounded-md bg-white object-contain p-1" />
                             <div className="min-w-0">
                                 <div className="font-semibold truncate">{j.title}</div>
-                                <div className="text-xs text-muted-foreground truncate">{j.company?.name} · {j.location}</div>
+                                <div className="text-xs text-muted-foreground truncate">{j.companyName} · {j.location}</div>
                             </div>
                             <div className="ml-auto text-right">
-                                <div className="text-sm font-semibold">₹{j.salary_lpa} LPA</div>
-                                <Badge variant="secondary" className="mt-1 text-[10px]">{j.role_type}</Badge>
+                                <div className="text-sm font-semibold">₹{j.salaryLpa} LPA</div>
+                                <Badge variant="secondary" className="mt-1 text-[10px]">{j.roleType}</Badge>
                             </div>
                         </div>
                     </Card>

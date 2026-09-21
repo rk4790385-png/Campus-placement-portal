@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getApplications, getUser, jobs, withdrawApplication } from "@/lib/local-store";
+import { getApplications, getUser, withdrawApplication } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,17 +21,17 @@ const statusVariant: Record<string, string> = {
 function Applications() {
     const qc = useQueryClient();
     const [userId, setUserId] = useState<string | null>(null);
-    useEffect(() => { setUserId(getUser()?.id ?? null); }, []);
+    useEffect(() => { getUser().then((user) => setUserId(user?.id ?? null)); }, []);
 
     const { data = [] } = useQuery({
         queryKey: ["myApplications", userId],
         enabled: !!userId,
-        queryFn: async () => getApplications().map((application) => ({ ...application, job: jobs.find((job) => job.id === application.job_id) })),
+        queryFn: getApplications,
     });
 
     const withdraw = useMutation({
         mutationFn: async (id: string) => {
-            withdrawApplication(id);
+            await withdrawApplication(id);
         },
         onSuccess: () => {
             toast.success("Application withdrawn");
@@ -51,13 +51,13 @@ function Applications() {
             <div className="grid gap-4">
                 {data.map((a: any) => (
                     <Card key={a.id} className="glass p-5 flex items-center gap-4 flex-wrap">
-                        <img src={a.job?.company?.logo_url} alt="" className="h-12 w-12 rounded-lg bg-white object-contain p-1.5" />
+                        <img src={a.job?.logoUrl} alt="" className="h-12 w-12 rounded-lg bg-white object-contain p-1.5" />
                         <div className="flex-1 min-w-[180px]">
                             <div className="font-semibold">{a.job?.title}</div>
-                            <div className="text-xs text-muted-foreground">{a.job?.company?.name} · {a.job?.location}</div>
-                            <div className="text-xs text-muted-foreground mt-1">Applied {new Date(a.applied_at).toLocaleDateString()}</div>
+                            <div className="text-xs text-muted-foreground">{a.job?.companyName} · {a.job?.location}</div>
+                            <div className="text-xs text-muted-foreground mt-1">Applied {new Date(a.appliedAt).toLocaleDateString()}</div>
                         </div>
-                        <div className="text-sm font-semibold">₹{a.job?.salary_lpa} LPA</div>
+                        <div className="text-sm font-semibold">₹{a.job?.salaryLpa} LPA</div>
                         <Badge variant={(statusVariant[a.status] ?? "secondary") as never}>{a.status}</Badge>
                         <Button variant="outline" size="sm" disabled={withdraw.isPending} onClick={() => withdraw.mutate(a.id)}>Withdraw</Button>
                     </Card>

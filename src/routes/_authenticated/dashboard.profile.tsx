@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { getProfile, saveProfile } from "@/lib/local-store";
+import { getProfile, saveProfile } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,10 +42,21 @@ function Profile() {
 
     useEffect(() => {
         (async () => {
-            const profile = getProfile();
+            const profile = await getProfile();
             reset({
-                ...profile,
+                full_name: profile.fullName,
+                phone: profile.phone,
+                usn: profile.usn,
+                branch: profile.branch,
+                semester: profile.semester ?? undefined,
+                cgpa: profile.cgpa ?? undefined,
+                backlogs: profile.backlogs ?? undefined,
+                resume_url: profile.resumeUrl,
                 skills: profile.skills.join(", "),
+                linkedin: profile.linkedin,
+                github: profile.github,
+                portfolio: profile.portfolio,
+                bio: profile.bio,
             });
             setLoading(false);
         })();
@@ -53,19 +64,18 @@ function Profile() {
 
     const onSubmit = handleSubmit(async (values) => {
         const skillsArr = (values.skills ?? "").toString().split(",").map((s) => s.trim()).filter(Boolean);
-        saveProfile({
-            full_name: values.full_name,
+        await saveProfile({
             phone: values.phone || "",
             usn: values.usn || "",
             branch: values.branch || "",
             semester: values.semester === ("" as never) ? null : (values.semester as number),
             cgpa: values.cgpa === ("" as never) ? null : (values.cgpa as number),
-            backlogs: values.backlogs === ("" as never) ? 0 : (values.backlogs as number),
+            backlogs: values.backlogs === ("" as never) ? null : (values.backlogs as number),
             skills: skillsArr,
             linkedin: values.linkedin || "",
             github: values.github || "",
             portfolio: values.portfolio || "",
-            resume_url: values.resume_url || "",
+            resumeUrl: values.resume_url || "",
             bio: values.bio || "",
         });
         toast.success("Profile saved");

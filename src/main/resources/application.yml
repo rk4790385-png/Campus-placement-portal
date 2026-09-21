@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/campus-placement;MODE=PostgreSQL;AUTO_SERVER=TRUE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax

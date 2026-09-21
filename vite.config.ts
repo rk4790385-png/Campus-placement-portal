@@ -7,6 +7,9 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+    vite: {
+        server: { proxy: { "/api": "http://localhost:8080" } },
+    },
     nitro: {
         preset: "vercel",
     },

@@ -1,0 +1,1 @@
+package com.campusplacement.repository; import com.campusplacement.model.Job; import org.springframework.data.jpa.repository.JpaRepository; public interface JobRepository extends JpaRepository<Job,String>{}

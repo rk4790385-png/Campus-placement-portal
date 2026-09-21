@@ -1,0 +1,3 @@
+package com.campusplacement.config;
+import com.campusplacement.model.Job; import com.campusplacement.repository.JobRepository; import org.springframework.boot.CommandLineRunner; import org.springframework.context.annotation.Bean; import org.springframework.context.annotation.Configuration;
+@Configuration public class SeedData { @Bean CommandLineRunner seedJobs(JobRepository jobs){return args->{if(jobs.count()==0){jobs.save(new Job("job-google-swe","Software Engineer","Google","Bengaluru",28));jobs.save(new Job("job-microsoft-pm","Product Management Intern","Microsoft","Hyderabad",12));jobs.save(new Job("job-amazon-data","Data Analyst","Amazon","India",18));jobs.save(new Job("job-adobe-frontend","Frontend Developer","Adobe","Noida",16));}};} }

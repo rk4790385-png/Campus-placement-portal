@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, MapPin, Calendar, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { applyToJob, getApplications, getUser, jobs as seedJobs } from "@/lib/local-store";
+import { applyToJob, getApplications, getJobs, getUser } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,35 +15,29 @@ export const Route = createFileRoute("/_authenticated/dashboard/jobs")({
     component: Jobs,
 });
 
-type Job = {
-    id: string; title: string; role_type: string; work_mode: string; location: string;
-    salary_lpa: number; description: string; min_cgpa: number; max_backlogs: number;
-    open_positions: number; apply_deadline: string;
-    company: { name: string; logo_url: string; website: string } | null;
-};
-
 function Jobs() {
     const qc = useQueryClient();
-    const userId = getUser()?.id ?? null;
+    const [userId, setUserId] = useState<string | null>(null);
     const [q, setQ] = useState("");
     const [mode, setMode] = useState<string>("all");
     const [type, setType] = useState<string>("all");
+    useEffect(() => { getUser().then((user) => setUserId(user?.id ?? null)); }, []);
 
     const { data: jobs = [] } = useQuery({
         queryKey: ["jobs"],
-        queryFn: async (): Promise<Job[]> => seedJobs,
+        queryFn: getJobs,
     });
 
     const { data: applied = new Set<string>() } = useQuery({
         queryKey: ["myAppliedJobIds", userId],
         enabled: !!userId,
-        queryFn: async () => new Set(getApplications().map((application) => application.job_id)),
+        queryFn: async () => new Set((await getApplications()).map((application) => application.job.id)),
     });
 
     const apply = useMutation({
         mutationFn: async (jobId: string) => {
             if (!userId) throw new Error("Not signed in");
-            applyToJob(jobId);
+            await applyToJob(jobId);
         },
         onSuccess: () => {
             toast.success("Application submitted");
@@ -56,11 +50,11 @@ function Jobs() {
 
     const filtered = useMemo(() => {
         return jobs.filter((j) => {
-            if (mode !== "all" && j.work_mode !== mode) return false;
-            if (type !== "all" && j.role_type !== type) return false;
+            if (mode !== "all" && j.workMode !== mode) return false;
+            if (type !== "all" && j.roleType !== type) return false;
             if (q.trim()) {
                 const s = q.toLowerCase();
-                if (!j.title.toLowerCase().includes(s) && !(j.company?.name?.toLowerCase().includes(s))) return false;
+                if (!j.title.toLowerCase().includes(s) && !j.companyName.toLowerCase().includes(s)) return false;
             }
             return true;
         });
@@ -104,27 +98,27 @@ function Jobs() {
                     return (
                         <Card key={j.id} className="glass p-5">
                             <div className="flex flex-wrap gap-4">
-                                <img src={j.company?.logo_url} alt="" className="h-14 w-14 rounded-lg bg-white object-contain p-1.5" />
+                                <img src={j.logoUrl} alt="" className="h-14 w-14 rounded-lg bg-white object-contain p-1.5" />
                                 <div className="flex-1 min-w-[200px]">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h3 className="font-semibold text-lg">{j.title}</h3>
-                                        <Badge variant="secondary">{j.role_type}</Badge>
-                                        <Badge variant="outline">{j.work_mode}</Badge>
+                                        <Badge variant="secondary">{j.roleType}</Badge>
+                                        <Badge variant="outline">{j.workMode}</Badge>
                                     </div>
                                     <div className="mt-1 text-sm text-muted-foreground flex items-center gap-3 flex-wrap">
-                                        <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{j.company?.name}</span>
+                                        <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{j.companyName}</span>
                                         <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{j.location}</span>
-                                        <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Apply by {new Date(j.apply_deadline).toLocaleDateString()}</span>
+                                        <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Apply by {new Date(j.applyDeadline).toLocaleDateString()}</span>
                                     </div>
                                     <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{j.description}</p>
                                     <div className="mt-3 flex gap-2 flex-wrap text-xs text-muted-foreground">
-                                        <span>Min CGPA: <b className="text-foreground">{j.min_cgpa}</b></span>
-                                        <span>· Max backlogs: <b className="text-foreground">{j.max_backlogs}</b></span>
-                                        <span>· Positions: <b className="text-foreground">{j.open_positions}</b></span>
+                                        <span>Min CGPA: <b className="text-foreground">{j.minCgpa}</b></span>
+                                        <span>· Max backlogs: <b className="text-foreground">{j.maxBacklogs}</b></span>
+                                        <span>· Positions: <b className="text-foreground">{j.openPositions}</b></span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end justify-between gap-2">
-                                    <div className="text-xl font-bold gradient-text">₹{j.salary_lpa} LPA</div>
+                                    <div className="text-xl font-bold gradient-text">₹{j.salaryLpa} LPA</div>
                                     <Button
                                         disabled={isApplied || apply.isPending}
                                         className={isApplied ? "" : "btn-hero border-0"}

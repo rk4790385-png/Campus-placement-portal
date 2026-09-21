@@ -34,4 +34,6 @@ dist-ssr
 
 # Environment variables
 .env
+data/
+target/
 

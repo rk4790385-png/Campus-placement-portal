@@ -1,0 +1,1 @@
+package com.campusplacement.repository; import com.campusplacement.model.StudentProfile; import org.springframework.data.jpa.repository.JpaRepository; import java.util.UUID; public interface ProfileRepository extends JpaRepository<StudentProfile,UUID>{}
