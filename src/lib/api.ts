@@ -10,8 +10,15 @@ export async function signIn(email: string, password: string) { currentUser = aw
 export async function signUp(fullName: string, email: string, password: string, role: User["role"]) { currentUser = await request<User>("/auth/register", { method: "POST", body: JSON.stringify({ fullName, email, password, role }) }); return currentUser; }
 export async function signOut() { await request<void>("/auth/logout", { method: "POST" }); currentUser = null; }
 export const getJobs = () => request<Job[]>("/jobs");
+export type JobInput = Omit<Job, "logoUrl" | "website"> & { logoUrl?: string; website?: string };
+export const createJob = (job: JobInput) => request<Job>("/jobs", { method: "POST", body: JSON.stringify(job) });
+export const updateJob = (id: string, job: JobInput) => request<Job>(`/jobs/${id}`, { method: "PUT", body: JSON.stringify(job) });
+export const deleteJob = (id: string) => request<void>(`/jobs/${id}`, { method: "DELETE" });
 export const getProfile = () => request<Profile>("/profile");
 export const saveProfile = (profile: Omit<Profile, "fullName">) => request<Profile>("/profile", { method: "PUT", body: JSON.stringify(profile) });
 export const getApplications = () => request<Application[]>("/applications");
 export const applyToJob = (jobId: string) => request<Application>(`/applications/${jobId}`, { method: "POST" });
 export const withdrawApplication = (id: string) => request<void>(`/applications/${id}`, { method: "DELETE" });
+export type RecruiterApplication = Application & { studentName: string; studentEmail: string; usn: string; branch: string; cgpa: number | null };
+export const getRecruiterApplications = () => request<RecruiterApplication[]>("/recruiter/applications");
+export const updateApplicationStatus = (id: string, status: string) => request<RecruiterApplication>(`/recruiter/applications/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });

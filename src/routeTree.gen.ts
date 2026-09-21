@@ -17,6 +17,7 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_authenticated/dashboard.profile'
 import { Route as AuthenticatedDashboardJobsRouteImport } from './routes/_authenticated/dashboard.jobs'
 import { Route as AuthenticatedDashboardApplicationsRouteImport } from './routes/_authenticated/dashboard.applications'
+import { Route as AuthenticatedDashboardRecruiterRouteImport } from './routes/_authenticated/dashboard.recruiter'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -61,12 +62,19 @@ const AuthenticatedDashboardApplicationsRoute =
     path: '/applications',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardRecruiterRoute =
+  AuthenticatedDashboardRecruiterRouteImport.update({
+    id: '/recruiter',
+    path: '/recruiter',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/dashboard/applications': typeof AuthenticatedDashboardApplicationsRoute
+  '/dashboard/recruiter': typeof AuthenticatedDashboardRecruiterRoute
   '/dashboard/jobs': typeof AuthenticatedDashboardJobsRoute
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard/applications': typeof AuthenticatedDashboardApplicationsRoute
+  '/dashboard/recruiter': typeof AuthenticatedDashboardRecruiterRoute
   '/dashboard/jobs': typeof AuthenticatedDashboardJobsRoute
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
@@ -86,6 +95,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/_authenticated/dashboard/applications': typeof AuthenticatedDashboardApplicationsRoute
+  '/_authenticated/dashboard/recruiter': typeof AuthenticatedDashboardRecruiterRoute
   '/_authenticated/dashboard/jobs': typeof AuthenticatedDashboardJobsRoute
   '/_authenticated/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
@@ -189,6 +199,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardApplicationsRoute: typeof AuthenticatedDashboardApplicationsRoute
+  AuthenticatedDashboardRecruiterRoute: typeof AuthenticatedDashboardRecruiterRoute
   AuthenticatedDashboardJobsRoute: typeof AuthenticatedDashboardJobsRoute
   AuthenticatedDashboardProfileRoute: typeof AuthenticatedDashboardProfileRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute

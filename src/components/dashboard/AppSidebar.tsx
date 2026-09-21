@@ -1,8 +1,9 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
     LayoutDashboard, Briefcase, FileText, User, LogOut, GraduationCap, Bell,
 } from "lucide-react";
-import { signOut as clearSession } from "@/lib/api";
+import { getUser, signOut as clearSession, type User } from "@/lib/api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,11 +11,15 @@ import {
     SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
+const studentItems = [
     { title: "Overview", url: "/dashboard", icon: LayoutDashboard, exact: true },
     { title: "Browse Jobs", url: "/dashboard/jobs", icon: Briefcase },
     { title: "My Applications", url: "/dashboard/applications", icon: FileText },
     { title: "Profile", url: "/dashboard/profile", icon: User },
+];
+const recruiterItems = [
+    { title: "Overview", url: "/dashboard", icon: LayoutDashboard, exact: true },
+    { title: "Recruiter workspace", url: "/dashboard/recruiter", icon: Briefcase },
 ];
 
 export function AppSidebar() {
@@ -23,6 +28,9 @@ export function AppSidebar() {
     const pathname = useRouterState({ select: (s) => s.location.pathname });
     const navigate = useNavigate();
     const qc = useQueryClient();
+    const [user, setUser] = useState<User | null>(null);
+    useEffect(() => { getUser().then(setUser); }, []);
+    const items = user?.role === "recruiter" ? recruiterItems : studentItems;
 
     const isActive = (url: string, exact?: boolean) =>
         exact ? pathname === url : pathname === url || pathname.startsWith(url + "/");
@@ -45,7 +53,7 @@ export function AppSidebar() {
                     {!collapsed && (
                         <div className="leading-tight">
                             <div className="text-sm font-bold">Campus Placement</div>
-                            <div className="text-[10px] text-muted-foreground -mt-0.5">STUDENT PORTAL</div>
+                            <div className="text-[10px] text-muted-foreground -mt-0.5">{user?.role === "recruiter" ? "RECRUITER PORTAL" : "STUDENT PORTAL"}</div>
                         </div>
                     )}
                 </div>
